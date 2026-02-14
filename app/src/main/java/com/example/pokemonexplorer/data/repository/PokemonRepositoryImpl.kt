@@ -1,0 +1,68 @@
+package com.example.pokemonexplorer.data.repository
+
+import com.example.pokemonexplorer.data.remote.PokeApi
+import com.example.pokemonexplorer.domain.model.Pokemon
+import com.example.pokemonexplorer.domain.model.PokemonDetail
+import com.example.pokemonexplorer.domain.repository.PokemonRepository
+import com.example.pokemonexplorer.ui.shared.Resource
+import jakarta.inject.Inject
+
+class PokemonRepositoryImpl @Inject constructor(
+    private val api: PokeApi
+) : PokemonRepository {
+
+    override suspend fun getPokemonByType(type: String): Resource<List<Pokemon>> {
+        return try {
+            val response = api.getPokemonByType(type.lowercase())
+
+            val pokemonList = response.pokemon.map { wrapper ->
+                val name = wrapper.data.name
+                val url = wrapper.data.url
+                val id = if (url.endsWith("/")) {
+                    url.dropLast(1).takeLastWhile { it.isDigit() }
+                } else {
+                    url.takeLastWhile { it.isDigit() }
+                }.toInt()
+
+                val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
+
+                Pokemon(
+                    id = id,
+                    name = name.replaceFirstChar { it.uppercase() },
+                    imageUrl = imageUrl
+                )
+            }
+
+            Resource.Success(pokemonList)
+
+        } catch (e: Exception) {
+            Resource.Error("An error occurred: ${e.localizedMessage ?: "Unknown Error"}")
+        }
+    }
+
+    override suspend fun getPokemonDetail(name: String): Resource<PokemonDetail> {
+        return try {
+            val dto = api.getPokemonDetail(name.lowercase())
+
+            val hp = dto.stats.find { it.statInfo.name == "hp" }?.value ?: 0
+            val attack = dto.stats.find { it.statInfo.name == "attack" }?.value ?: 0
+            val defense = dto.stats.find { it.statInfo.name == "defense" }?.value ?: 0
+
+            val imageUrl = dto.sprites.frontDefault
+                ?: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${dto.id}.png"
+
+            val detail = PokemonDetail(
+                id = dto.id,
+                name = dto.name.replaceFirstChar { it.uppercase() },
+                imageUrl = imageUrl,
+                hp = hp,
+                attack = attack,
+                defense = defense
+            )
+
+            Resource.Success(detail)
+        } catch (e: Exception) {
+            Resource.Error("Could not load details: ${e.localizedMessage}")
+        }
+    }
+}

@@ -4,44 +4,42 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
 import com.example.pokemonexplorer.ui.theme.PokemonExplorerTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             PokemonExplorerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                val navController = rememberNavController()
+
+                NavHost(navController = navController, startDestination = "pokemon_list") {
+
+                    /*composable("pokemon_list") {
+                        PokemonListScreen(
+                            onNavigateToDetail = { name ->
+                                navController.navigate("pokemon_detail/$name")
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = "pokemon_detail/{name}",
+                        arguments = listOf(navArgument("name") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val name = backStackEntry.arguments?.getString("name") ?: return@composable
+                        PokemonDetailScreen(
+                            pokemonName = name,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }*/
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    PokemonExplorerTheme {
-        Greeting("Android")
     }
 }
