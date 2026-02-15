@@ -186,7 +186,7 @@ fun DetailContent(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    StatBarAnimated("HP", detail.hp, primaryColor)
+                    StatBarAnimated("HP", detail.hp, Color(0xFF8BC34A))
                     StatBarAnimated("ATK", detail.attack, Color(0xFFFF5252))
                     StatBarAnimated("DEF", detail.defense, Color(0xFF448AFF))
 

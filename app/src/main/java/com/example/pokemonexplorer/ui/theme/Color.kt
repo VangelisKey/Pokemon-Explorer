@@ -22,6 +22,14 @@ fun parseTypeToColor(type: String): Color {
         "fairy" -> Color(0xFFEC98ED)
         "ghost" -> Color(0xFF6666BA)
         "steel" -> Color(0xFFA9A9BA)
+        "normal" -> Color(0xFFA9A9BA)
+        "ice" -> Color(0xFF66CBFD)
+        "fighting" -> Color(0xFFBA5544)
+        "poison" -> Color(0xFFA95598)
+        "ground" -> Color(0xFFDCBA55)
+        "flying" -> Color(0xFF8798FD)
+        "bug" -> Color(0xFFA9BA22)
+        "rock" -> Color(0xFFBAA966)
         else -> Color(0xFFA9A998)
     }
 }

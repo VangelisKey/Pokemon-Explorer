@@ -187,7 +187,7 @@ fun PokemonItem(pokemon: Pokemon, onClick: () -> Unit) {
                 model = pokemon.imageUrl,
                 contentDescription = pokemon.name,
                 modifier = Modifier.size(100.dp),
-                placeholder = painterResource(R.drawable.ic_launcher_foreground)
+                placeholder = painterResource(R.drawable.poke_ball_icon)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
