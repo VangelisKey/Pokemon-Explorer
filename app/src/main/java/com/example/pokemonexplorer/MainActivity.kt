@@ -28,19 +28,27 @@ class MainActivity : ComponentActivity() {
                     composable("pokemon_list") {
                         PokemonListScreen(
                             onNavigateToDetail = { name ->
-                                navController.navigate("pokemon_detail/$name")
+                                navController.navigate("detail/$name")
                             }
                         )
                     }
 
                     composable(
-                        route = "pokemon_detail/{name}",
+                        route = "detail/{name}",
                         arguments = listOf(navArgument("name") { type = NavType.StringType })
                     ) { backStackEntry ->
-                        val name = backStackEntry.arguments?.getString("name") ?: return@composable
+                        val name = backStackEntry.arguments?.getString("name") ?: ""
                         PokemonDetailScreen(
                             pokemonName = name,
-                            onBack = { navController.popBackStack() }
+                            onBack = { navController.popBackStack() },
+                            onPokemonClick = { clickedName ->
+                                if (clickedName == name) return@PokemonDetailScreen
+                                navController.navigate("detail/$clickedName") {
+                                    popUpTo("pokemon_list") {
+                                        inclusive = false
+                                    }
+                                }
+                            }
                         )
                     }
                 }

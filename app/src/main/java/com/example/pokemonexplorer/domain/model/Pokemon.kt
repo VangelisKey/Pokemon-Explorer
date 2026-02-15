@@ -12,5 +12,7 @@ data class PokemonDetail(
     val imageUrl: String,
     val hp: Int,
     val attack: Int,
-    val defense: Int
+    val defense: Int,
+    val types: List<String>,
+    val evolutions: List<Pokemon>
 )

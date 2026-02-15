@@ -1,5 +1,6 @@
 package com.example.pokemonexplorer.data.repository
 
+import com.example.pokemonexplorer.data.remote.ChainLinkDto
 import com.example.pokemonexplorer.data.remote.PokeApi
 import com.example.pokemonexplorer.domain.model.Pokemon
 import com.example.pokemonexplorer.domain.model.PokemonDetail
@@ -44,6 +45,7 @@ class PokemonRepositoryImpl @Inject constructor(
         return try {
             val dto = api.getPokemonDetail(name.lowercase())
 
+            val types = dto.types.map { it.type.name }
             val hp = dto.stats.find { it.statInfo.name == "hp" }?.value ?: 0
             val attack = dto.stats.find { it.statInfo.name == "attack" }?.value ?: 0
             val defense = dto.stats.find { it.statInfo.name == "defense" }?.value ?: 0
@@ -51,18 +53,47 @@ class PokemonRepositoryImpl @Inject constructor(
             val imageUrl = dto.sprites.frontDefault
                 ?: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${dto.id}.png"
 
+            val evolutions = try {
+                val speciesDto = api.getPokemonSpecies(dto.species.name)
+                val chainDto = api.getEvolutionChain(speciesDto.evolutionChain.url)
+                parseEvolutionChain(chainDto.chain)
+            } catch (e: Exception) {
+                emptyList()
+            }
+
             val detail = PokemonDetail(
                 id = dto.id,
                 name = dto.name.replaceFirstChar { it.uppercase() },
                 imageUrl = imageUrl,
                 hp = hp,
                 attack = attack,
-                defense = defense
+                defense = defense,
+                types = types,
+                evolutions = evolutions
             )
 
             Resource.Success(detail)
         } catch (e: Exception) {
             Resource.Error("Could not load details: ${e.localizedMessage}")
         }
+    }
+
+    private fun parseEvolutionChain(link: ChainLinkDto): List<Pokemon> {
+        val currentList = mutableListOf<Pokemon>()
+        val id = link.species.url.dropLast(1).takeLastWhile { it.isDigit() }.toInt()
+
+        currentList.add(
+            Pokemon(
+                id = id,
+                name = link.species.name.replaceFirstChar { it.uppercase() },
+                imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
+            )
+        )
+
+        link.evolvesTo.forEach { childLink ->
+            currentList.addAll(parseEvolutionChain(childLink))
+        }
+
+        return currentList
     }
 }
