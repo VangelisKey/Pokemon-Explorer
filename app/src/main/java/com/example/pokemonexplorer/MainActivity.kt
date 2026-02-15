@@ -4,8 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.pokemonexplorer.ui.feature.detail.PokemonDetailScreen
+import com.example.pokemonexplorer.ui.feature.list.PokemonListScreen
 import com.example.pokemonexplorer.ui.theme.PokemonExplorerTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,7 +25,7 @@ class MainActivity : ComponentActivity() {
 
                 NavHost(navController = navController, startDestination = "pokemon_list") {
 
-                    /*composable("pokemon_list") {
+                    composable("pokemon_list") {
                         PokemonListScreen(
                             onNavigateToDetail = { name ->
                                 navController.navigate("pokemon_detail/$name")
@@ -37,7 +42,7 @@ class MainActivity : ComponentActivity() {
                             pokemonName = name,
                             onBack = { navController.popBackStack() }
                         )
-                    }*/
+                    }
                 }
             }
         }
