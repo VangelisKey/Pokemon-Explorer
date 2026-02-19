@@ -12,6 +12,33 @@ class PokemonRepositoryImpl @Inject constructor(
     private val api: PokeApi
 ) : PokemonRepository {
 
+    override suspend fun getAllPokemon(offset: Int, limit: Int): Resource<List<Pokemon>> {
+        return try {
+            val response = api.getAllPokemon(offset, limit)
+
+            val pokemonList = response.results.map { resource ->
+                val url = resource.url
+                val id = if (url.endsWith("/")) {
+                    url.dropLast(1).takeLastWhile { it.isDigit() }.toInt()
+                } else {
+                    url.takeLastWhile { it.isDigit() }.toInt()
+                }
+
+                val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
+
+                Pokemon(
+                    id = id,
+                    name = resource.name.replaceFirstChar { it.uppercase() },
+                    imageUrl = imageUrl
+                )
+            }
+
+            Resource.Success(pokemonList)
+        } catch (e: Exception) {
+            Resource.Error("An error occurred: ${e.localizedMessage ?: "Unknown Error"}")
+        }
+    }
+
     override suspend fun getPokemonByType(type: String): Resource<List<Pokemon>> {
         return try {
             val response = api.getPokemonByType(type.lowercase())
@@ -58,6 +85,7 @@ class PokemonRepositoryImpl @Inject constructor(
                 val chainDto = api.getEvolutionChain(speciesDto.evolutionChain.url)
                 parseEvolutionChain(chainDto.chain)
             } catch (e: Exception) {
+                e.printStackTrace()
                 emptyList()
             }
 

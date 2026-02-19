@@ -12,6 +12,13 @@ data class PokemonWrapperDto(
     val data: PokemonBasicDto
 )
 
+data class PokemonPaginatedResponseDto(
+    val count: Int,
+    val next: String?,
+    val previous: String?,
+    val results: List<NamedApiResourceDto>
+)
+
 data class PokemonBasicDto(
     val name: String,
     val url: String

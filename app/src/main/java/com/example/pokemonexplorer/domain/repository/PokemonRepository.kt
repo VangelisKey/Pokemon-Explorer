@@ -5,6 +5,8 @@ import com.example.pokemonexplorer.domain.model.PokemonDetail
 import com.example.pokemonexplorer.ui.shared.Resource
 
 interface PokemonRepository {
+
+    suspend fun getAllPokemon(offset: Int, limit: Int): Resource<List<Pokemon>>
     suspend fun getPokemonByType(type: String): Resource<List<Pokemon>>
     suspend fun getPokemonDetail(name: String): Resource<PokemonDetail>
 }
