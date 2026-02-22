@@ -107,12 +107,17 @@ fun PokemonListScreen(
                         error = state.error!!,
                         modifier = Modifier.align(Alignment.Center)
                     )
+                } else if (state.pokemonList.isEmpty() && state.searchQuery.isNotEmpty()) {
+                    EmptySearchState(
+                        searchQuery = state.searchQuery,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 } else {
                     PokemonGrid(
                         pokemonList = state.pokemonList,
                         themeColor = themeColor,
                         isLoading = state.isLoading,
-                        endReached = state.endReached,
+                        endReached = state.endReached || state.searchQuery.isNotBlank(),
                         onLoadMore = { viewModel.onEvent(PokemonListEvent.LoadMore) },
                         onPokemonClick = onNavigateToDetail
                     )
@@ -352,6 +357,27 @@ fun ErrorState(error: String, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = error,
+            color = Color.Gray,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun EmptySearchState(searchQuery: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "No results",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "We couldn't find any Pokémon matching \"$searchQuery\". Make sure the name is spelled correctly.",
             color = Color.Gray,
             textAlign = TextAlign.Center
         )

@@ -6,6 +6,8 @@ import com.example.pokemonexplorer.domain.model.Pokemon
 import com.example.pokemonexplorer.domain.repository.PokemonRepository
 import com.example.pokemonexplorer.ui.shared.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -27,9 +29,11 @@ class PokemonListViewModel @Inject constructor(
     private var currentOffset = 0 // Used for real API paging
     private val pageSize = 10
 
+    // Used to debounce our search queries
+    private var searchJob: Job? = null
+
     val availableTypes = listOf(
-        "All", // Added "All" category
-        "Fire", "Water", "Grass", "Electric", "Dragon",
+        "All", "Fire", "Water", "Grass", "Electric", "Dragon",
         "Psychic", "Ghost", "Dark", "Steel", "Fairy"
     )
 
@@ -44,6 +48,9 @@ class PokemonListViewModel @Inject constructor(
                 loadPokemonByType(event.type)
             }
             is PokemonListEvent.LoadMore -> {
+                // Prevent loading more pages while searching
+                if (_uiState.value.searchQuery.isNotBlank()) return
+
                 if (_uiState.value.selectedType == "All") {
                     currentOffset += pageSize
                     loadAllPokemon(currentOffset)
@@ -57,8 +64,56 @@ class PokemonListViewModel @Inject constructor(
                     currentPage = 0
                 }
                 _uiState.update { it.copy(searchQuery = event.query) }
-                updateUiList()
+
+                searchJob?.cancel()
+                searchJob = viewModelScope.launch {
+                    delay(300L) // Debounce for 300ms to avoid API spam
+                    handleSearch(event.query)
+                }
             }
+        }
+    }
+
+    private suspend fun handleSearch(query: String) {
+        val isAllType = _uiState.value.selectedType == "All"
+
+        if (query.isBlank()) {
+            updateUiList()
+            return
+        }
+
+        if (isAllType) {
+            val localMatch = fullPokemonCache.filter { it.name.contains(query, ignoreCase = true) }
+
+            if (localMatch.isNotEmpty()) {
+                _uiState.update { it.copy(pokemonList = localMatch, isLoading = false, error = null) }
+            } else {
+                _uiState.update { it.copy(isLoading = true, error = null) }
+                when (val result = repository.getPokemonDetail(query.trim().lowercase())) {
+                    is Resource.Success -> {
+                        val detail = result.data
+                        if (detail != null) {
+                            val searchedPokemon = Pokemon(
+                                id = detail.id,
+                                name = detail.name,
+                                imageUrl = detail.imageUrl
+                            )
+                            _uiState.update {
+                                it.copy(
+                                    pokemonList = listOf(searchedPokemon),
+                                    isLoading = false
+                                )
+                            }
+                        }
+                    }
+                    is Resource.Error -> {
+                        _uiState.update { it.copy(pokemonList = emptyList(), isLoading = false) }
+                    }
+                    is Resource.Loading -> {}
+                }
+            }
+        } else {
+            updateUiList()
         }
     }
 
@@ -100,7 +155,10 @@ class PokemonListViewModel @Inject constructor(
                     fullPokemonCache = fullPokemonCache + newItems
 
                     _uiState.update { it.copy(endReached = isEndReached) }
-                    updateUiList()
+
+                    if (_uiState.value.searchQuery.isBlank()) {
+                        updateUiList()
+                    }
                 }
                 is Resource.Error -> {
                     _uiState.update { it.copy(isLoading = false, error = result.message) }
@@ -114,7 +172,6 @@ class PokemonListViewModel @Inject constructor(
         val query = _uiState.value.searchQuery
         val isAllType = _uiState.value.selectedType == "All"
 
-        // Filter based on search query
         val filteredList = if (query.isBlank()) {
             fullPokemonCache
         } else {
