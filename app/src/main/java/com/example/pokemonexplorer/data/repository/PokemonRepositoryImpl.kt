@@ -7,6 +7,8 @@ import com.example.pokemonexplorer.domain.model.PokemonDetail
 import com.example.pokemonexplorer.domain.repository.PokemonRepository
 import com.example.pokemonexplorer.ui.shared.Resource
 import jakarta.inject.Inject
+import retrofit2.HttpException
+import java.io.IOException
 
 class PokemonRepositoryImpl @Inject constructor(
     private val api: PokeApi
@@ -34,8 +36,12 @@ class PokemonRepositoryImpl @Inject constructor(
             }
 
             Resource.Success(pokemonList)
+        } catch (e: HttpException) {
+            Resource.Error("Oops! Something went wrong on our end. Please try again later.")
+        } catch (e: IOException) {
+            Resource.Error("Couldn't reach the server. Check your internet connection.")
         } catch (e: Exception) {
-            Resource.Error("An error occurred: ${e.localizedMessage ?: "Unknown Error"}")
+            Resource.Error("An unexpected error occurred: ${e.localizedMessage ?: "Unknown Error"}")
         }
     }
 
@@ -63,8 +69,12 @@ class PokemonRepositoryImpl @Inject constructor(
 
             Resource.Success(pokemonList)
 
+        } catch (e: HttpException) {
+            Resource.Error("Oops! Something went wrong on our end. Please try again later.")
+        } catch (e: IOException) {
+            Resource.Error("Couldn't reach the server. Check your internet connection.")
         } catch (e: Exception) {
-            Resource.Error("An error occurred: ${e.localizedMessage ?: "Unknown Error"}")
+            Resource.Error("An unexpected error occurred: ${e.localizedMessage ?: "Unknown Error"}")
         }
     }
 
@@ -101,8 +111,16 @@ class PokemonRepositoryImpl @Inject constructor(
             )
 
             Resource.Success(detail)
+        } catch (e: HttpException) {
+            if (e.code() == 404) {
+                Resource.Error("We couldn't find any details for '$name'.")
+            } else {
+                Resource.Error("Oops! Something went wrong on our end. Please try again later.")
+            }
+        } catch (e: IOException) {
+            Resource.Error("Couldn't reach the server. Check your internet connection.")
         } catch (e: Exception) {
-            Resource.Error("Could not load details: ${e.localizedMessage}")
+            Resource.Error("An unexpected error occurred: ${e.localizedMessage ?: "Unknown Error"}")
         }
     }
 
